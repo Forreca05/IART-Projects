@@ -3,3 +3,4 @@ Notebooks/.virtual_documents
 output.txt
 __pycache__/
 Project1/__pycache__/
+Project2/model.pkl
