@@ -1,0 +1,17 @@
+tirei daqui: https://www.kaggle.com/code/annastasy/predicting-students-grades
+
+StudentID → Unique identifier for each student.
+Age → Student age.
+Gender → Student gender (0 = Female, 1 = Male).
+Ethnicity → Ethnicity group/category represented numerically.
+ParentalEducation → Parents’ education level (0–4, where higher values represent higher education levels).
+StudyTimeWeekly → Average number of study hours per week.
+Absences → Number of school absences.
+Tutoring → Whether the student receives tutoring support (0 = No, 1 = Yes).
+ParentalSupport → Level of parental support (0–4, from low to high support).
+Extracurricular → Participation in extracurricular activities (0 = No, 1 = Yes).
+Sports → Participation in sports activities (0 = No, 1 = Yes).
+Music → Participation in music-related activities (0 = No, 1 = Yes).
+Volunteering → Participation in volunteering activities (0 = No, 1 = Yes).
+GPA → Grade Point Average, representing the student’s academic performance.
+GradeClass → Final predicted/performance class (0–4, where lower values usually represent better academic performance).
