@@ -113,7 +113,7 @@ fig, ax = plt.subplots(figsize=(6, 6))
 disp.plot(ax=ax, cmap="Blues", values_format="d")
 
 plt.title("Confusion Matrix - Best Model")
-plt.show()
+plt.savefig("confusion_matrix.png")
 
 # Final summary
 print("\n" + line)
