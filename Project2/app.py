@@ -3,6 +3,28 @@ import streamlit as st
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+# =========================
+# DEEP LEARNING MODEL CLASS
+# =========================
+class StudentPerformanceNN(nn.Module):
+    def __init__(self, input_size, num_classes):
+        super(StudentPerformanceNN, self).__init__()
+        self.network = nn.Sequential(
+            nn.Linear(input_size, 64),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(32, num_classes)
+        )
+        
+    def forward(self, x):
+        return self.network(x)
 
 # =========================
 # CONFIG
@@ -13,7 +35,18 @@ st.set_page_config(
     layout="wide"
 )
 
+# Load Classical ML Model
 model = joblib.load("model.pkl")
+
+# Load Deep Learning Preprocessor and Model
+try:
+    dl_preprocessor = joblib.load("dl_preprocessor.pkl")
+    # Assuming input size is 15 (based on the original data + one-hot encoding columns)
+    # We will compute it dynamically based on the preprocessor output later.
+    dl_model_loaded = True
+except FileNotFoundError:
+    dl_model_loaded = False
+    st.warning("Deep Learning model files not found. Please run train_dl_model.py first to generate dl_preprocessor.pkl and dl_model.pth")
 
 st.title("🎓 TutoringMaster")
 st.markdown("### Student Performance Prediction System")
@@ -93,7 +126,23 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("📋 Student Data")
-    st.dataframe(input_data, width='stretch')
+    
+    # Split the features into two halves for a 2-column table
+    df_transposed = input_data.T.reset_index()
+    df_transposed.columns = ["Feature", "Value"]
+    
+    half_len = len(df_transposed) // 2 + (len(df_transposed) % 2)
+    col1_df = df_transposed.iloc[:half_len].reset_index(drop=True)
+    col2_df = df_transposed.iloc[half_len:].reset_index(drop=True)
+    
+    # Display the two halves in separate inner columns to create a clear visual gap/divider
+    table_col1, table_col2 = st.columns(2)
+    
+    with table_col1:
+        st.dataframe(col1_df, use_container_width=True, hide_index=True)
+        
+    with table_col2:
+        st.dataframe(col2_df, use_container_width=True, hide_index=True)
 
 with col2:
     st.subheader("📊 Key Indicators")
@@ -108,37 +157,71 @@ st.divider()
 # =========================
 if st.button("Predict Grade Class"):
 
+    # 1. Classical Model Prediction
     prediction = model.predict(input_data)[0]
+    
+    # 2. Deep Learning Model Prediction
+    dl_prediction = None
+    dl_probs = None
+    if dl_model_loaded:
+        dl_input = dl_preprocessor.transform(input_data)
+        dl_input_tensor = torch.tensor(dl_input, dtype=torch.float32)
+        
+        # Load DL model dynamically once we know exact input size
+        input_size_dl = dl_input_tensor.shape[1]
+        num_classes_dl = 5 # 0 to 4
+        dl_model = StudentPerformanceNN(input_size_dl, num_classes_dl)
+        dl_model.load_state_dict(torch.load("dl_model.pth", weights_only=True))
+        dl_model.eval()
+        
+        with torch.no_grad():
+            outputs = dl_model(dl_input_tensor)
+            probs = F.softmax(outputs, dim=1)
+            _, preds = torch.max(outputs, 1)
+            dl_prediction = preds.item()
+            dl_probs = probs.numpy()[0]
 
-    st.subheader("🎯 Result")
+    st.subheader("🎯 Result comparison")
 
-    col1, col2 = st.columns(2)
+    res_col1, res_col2 = st.columns(2)
 
-    with col1:
+    with res_col1:
+        st.markdown("### 🤖 Classical Machine Learning")
         st.metric("Predicted GradeClass", prediction)
-
-    with col2:
         risk = "High" if prediction in [3, 4] else "Low"
         st.metric("Risk Level", risk)
+        
+        if hasattr(model, "predict_proba"):
+            probs_ml = model.predict_proba(input_data)[0]
+            prob_df_ml = pd.DataFrame({
+                "Class": model.classes_,
+                "Probability": probs_ml
+            })
+            fig, ax = plt.subplots(figsize=(4, 3))
+            ax.bar(prob_df_ml["Class"], prob_df_ml["Probability"], color='skyblue')
+            ax.set_ylabel("Probability")
+            ax.set_title("ML Confidence")
+            st.pyplot(fig)
 
-    # =========================
-    # PROBABILITY
-    # =========================
-    if hasattr(model, "predict_proba"):
-        probs = model.predict_proba(input_data)[0]
 
-        prob_df = pd.DataFrame({
-            "Class": model.classes_,
-            "Probability": probs
-        })
-
-        st.subheader("📈 Prediction Confidence")
-
-        fig, ax = plt.subplots()
-        ax.bar(prob_df["Class"], prob_df["Probability"])
-        ax.set_ylabel("Probability")
-
-        st.pyplot(fig)
+    with res_col2:
+        st.markdown("### 🧠 Deep Learning Neural Net")
+        if dl_model_loaded:
+            st.metric("Predicted GradeClass", dl_prediction)
+            risk_dl = "High" if dl_prediction in [3, 4] else "Low"
+            st.metric("Risk Level", risk_dl)
+            
+            prob_df_dl = pd.DataFrame({
+                "Class": [0, 1, 2, 3, 4],
+                "Probability": dl_probs
+            })
+            fig2, ax2 = plt.subplots(figsize=(4, 3))
+            ax2.bar(prob_df_dl["Class"], prob_df_dl["Probability"], color='salmon')
+            ax2.set_ylabel("Probability")
+            ax2.set_title("DL Confidence")
+            st.pyplot(fig2)
+        else:
+            st.warning("Deep Learning model disconnected. Train it locally to see results.")
 
     # =========================
     # RECOMMENDATIONS
