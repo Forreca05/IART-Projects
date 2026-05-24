@@ -1,3 +1,7 @@
+rever os files e talvez dar improve da app
+rever o powerpoint
+
+
 tirei daqui: https://www.kaggle.com/code/annastasy/predicting-students-grades
 
 StudentID → Unique identifier for each student.
@@ -15,3 +19,12 @@ Music → Participation in music-related activities (0 = No, 1 = Yes).
 Volunteering → Participation in volunteering activities (0 = No, 1 = Yes).
 GPA → Grade Point Average, representing the student’s academic performance.
 GradeClass → Final predicted/performance class (0–4, where lower values usually represent better academic performance).
+
+
+
+average="weighted"-> pondera pelo tamanho das classes
+
+precision- Das previsões que fiz para esta classe, quantas estavam certas?
+recall- De todos os exemplos reais desta classe, quantos o modelo encontrou?
+f1_score = 2 * (precison * recall / (precision + recall))
+support- Número de amostras reais dessa classe no y_test

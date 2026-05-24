@@ -4,3 +4,7 @@ output.txt
 __pycache__/
 Project1/__pycache__/
 .DS_Store
+Project2/model.pkl
+.vscode/
+Project1/Project1.zip
+
