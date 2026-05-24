@@ -18,7 +18,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, classification_report
 
 # Load data
-data = pd.read_csv("Student_performance_data.csv")
+data = pd.read_csv("dados_grade_invertida.csv")
 
 # Target
 y = data["GradeClass"]
